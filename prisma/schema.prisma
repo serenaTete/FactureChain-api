@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model Report {
+  id            String   @id @default(uuid())
+  name          String?        // optionnel
+  city          String
+  meterNumber   String
+  billedAmount  Int            // montant facturé
+  realAmount    Int            // montant réel
+  description   String
+  fileUrl       String?        // facture importée
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  resolution    String?
+}
+
+model Testimonial {
+  id              String   @id @default(uuid())
+  name            String
+  profession      String
+  city            String
+  realAmount      Int              // montant réel payé
+  usualAmount     Int              // montant habituel
+  problem         String           // type de problème
+  description     String
+  createdAt       DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String?
+  email     String   @unique
+  password  String
+  address   String
+  role      String   // admin, client
+  createdAt DateTime @default(now())
+  meters    Compteur[]
+}
+
+model Compteur {
+  id        String   @id @default(uuid())
+  numero    String   @unique
+  userId    String?
+  status    String
+  user      User?     @relation(fields: [userId], references: [id])
+  consumptions  Consommation[]
+}
+
+model Consommation {
+  id          String   @id @default(uuid())
+  compteurId  String
+  valeurKwh   Float
+  date        DateTime @default(now())
+  userAddress String
+  meter       Compteur  @relation(fields: [compteurId], references: [id])
+  hash        String
+}
+
+model Facture {
+  id            String   @id @default(uuid())
+  consommationId String
+  montant       Float
+  statut        String // normal, suspect
+  hash          String?
+  version       Int @default(1)
+  isActive      Boolean @default(true)
+  txHash        String?
+  userId        String
+  qrCode        String
+  createdAt     DateTime @default(now())
+}
+
+model Anomalie {
+  id            String   @id @default(uuid())
+  consommationId String
+  type          String
+  description   String?
+  createdAt     DateTime @default(now())
+  consumption   Consumption @relation(fields: [consumptionId], references: [id])
+  hash          String ?
+}
+model Alerte {
+  id        String @id @default(uuid())
+  userId    String
+  message   String
+  seen      Boolean @default(false)
+  createdAt DateTime @default(now())
+}
