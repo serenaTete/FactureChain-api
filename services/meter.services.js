@@ -60,7 +60,7 @@ export const getAssignedMeters = async()=>{
 export const add = async (userId, numero)=>{
 
     const meter= await prisma.Compteur.create({
-        data:: {
+        data: {
             userId,
             numero
         }

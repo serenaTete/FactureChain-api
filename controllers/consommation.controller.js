@@ -1,4 +1,4 @@
-import {getHistory} from "../services/consommation.query.service.js";
+import {getHistory} from "../services/consommation.query.services.js";
 
 
 export const history = async (req, res) =>{

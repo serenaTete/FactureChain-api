@@ -1,4 +1,4 @@
-import contract from "./blockchain.service.js";
+import {verifyFactureHash} from "./blockchain.service.js";
 import { uuidToBytes32 } from "../utils/hash.js";
 import crypto from "crypto";
 
@@ -16,7 +16,7 @@ export const verify = async ({ id, factureData }) => {
 
   const idBytes = uuidToBytes32(id);
 
-  const chainHash = await contract.verifyFactureHash(idBytes);
+  const chainHash = await verifyFactureHash(idBytes);
 
   return {
     valid: localHash === chainHash,

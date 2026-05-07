@@ -1,5 +1,5 @@
 // services/simulationService.js
-import { createConsommation } from "./consommation.service.js";
+import { createConsommation } from "./consommation.services.js";
 import {getAssignedMeters} from "./meter.services.js";
 
 

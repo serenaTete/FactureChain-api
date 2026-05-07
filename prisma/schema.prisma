@@ -19,23 +19,23 @@ datasource db {
 model Report {
   id            String   @id @default(uuid())
   name          String?        // optionnel
-  city          String
-  meterNumber   String
+  city          String?
+  meterNumber   String?
   userId        String
   meterId       String?
-  billedAmount  Int            // montant facturé
-  realAmount    Int            // montant réel
-  reason   String
+  finalHash     String?
+  billedAmount  Int?            // montant facturé
+  realAmount    Int?            // montant réel
+  reason   String?
   fileUrl       String?        // facture importée
-  status        String   @default("pending")
+  status        String?   @default("pending")
   createdAt     DateTime @default(now())
   billId        String?
   type          String
   description   String
-  hash          String
-  txHash        String
-  status        ComplaintStatus @default(PENDING)
-  bill          Facture @relation(fields: [billId], references: [id])
+  hash          String?
+  txHash        String?
+  bill          Facture? @relation(fields: [billId], references: [id])
 }
 
 model Testimonial {
@@ -53,8 +53,8 @@ model Testimonial {
 model User {
   id        String   @id @default(uuid())
   name      String?
-  email     String   @unique
-  password  String
+  email     String?   @unique
+  password  String?
   address   String
   nonce     String
   role      String  @default("USER") // admin, client
@@ -70,6 +70,7 @@ model Compteur {
   response  String?
   user      User?     @relation(fields: [userId], references: [id])
   consumptions  Consommation[]
+  factures      Facture[]
 }
 
 model Consommation {
@@ -77,15 +78,16 @@ model Consommation {
   compteurId  String
   valeurKwh   Float
   date        DateTime @default(now())
-  userAddress String
+  userAddress String?
   meter       Compteur  @relation(fields: [compteurId], references: [id])
-  hash        String
-  txHash      String
+  hash        String?
+  txHash      String?
+  anomalies   Anomalie[]
 }
 
 model Facture {
   id            String   @id @default(uuid())
-  consommationId String
+  consommationId String?
   montant       Float
   status       BillStatus @default(GENERATED) 
   hash          String?
@@ -93,7 +95,7 @@ model Facture {
   isActive      Boolean @default(true)
   txHash        String?
   userId        String
-  qrCode        String
+  qrCode        String?
    anomalyFlag   Boolean @default(false)
   anomalyScore   Float?
   createdAt     DateTime @default(now())
@@ -103,7 +105,10 @@ model Facture {
   month         Int
   parentId      String?
   totalKwh      Float
-  isCorrected   Boolean @default false
+  isCorrected   Boolean @default(false)
+  anomalies     Anomalie[]
+  report        Report[]
+
 
 }
 
@@ -113,20 +118,20 @@ model Anomalie {
   type          String
   description   String?
   createdAt     DateTime @default(now())
-  consumption   Consumption @relation(fields: [consumptionId], references: [id])
+  consumption   Consommation @relation(fields: [consommationId], references: [id])
   hash          String?
   txHash        String?
-  billId        String
-  severity      String
-  bill          Facture @relation(fields: [billId], references: [id])
+  billId        String?
+  severity      String?
+  bill          Facture? @relation(fields: [billId], references: [id])
 }
 model Alerte {
   id        String @id @default(uuid())
   meterId   String?
-  type      String
-  severity  String
-  userId    String
-  message   String
+  type      String?
+  severity  String?
+  userId    String?
+  message   String?
   seen      Boolean @default(false)
   createdAt DateTime @default(now())
 }

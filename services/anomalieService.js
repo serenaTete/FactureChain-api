@@ -1,7 +1,6 @@
 // services/anomalieService.js
 import prisma from "../utils/prisma.js";
-import { storeOnBlockchain } from "./blockchain.service.js";
-import {hashData} from "../hash.js";
+import {hashData} from "../utils/hash.js";
 import {reportAnomaly, storeAnomalyHash} from "./blockchain.service.js"
 import {io} from "../index.js";
 
@@ -24,7 +23,7 @@ import {io} from "../index.js";
 
         return "NORMAL_ANOMALY";
     }
-       export const createAnomaly = async(consommation)=>{
+       export const createAnomalie = async(consommation)=>{
 
       const userAddress = consommation.meter.user.address;
       const avgData = await prisma.consommation.aggregate({

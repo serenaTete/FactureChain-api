@@ -4,7 +4,7 @@ import prisma from "../utils/prisma.js";
  * 🔴 TEMPS RÉEL
  */
 
-export const gethistory = async({
+export const getHistory = async({
     meterId, 
     period,
     date, 
@@ -22,18 +22,18 @@ export const gethistory = async({
         end.setHours(0,0,0,0);
     }
 
-    elseif(period ==="this_month"){
+    else if(period ==="this_month"){
         start = new Date( now.getFullYear(), now.getMonth(), 1);
 
         end = new Date( now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59, 999);
     }
 
-    elseif(period === "this_year"){
+    else if(period === "this_year"){
         start = new Date(now.getFullYear(), 0, 1);
         end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
     }
 
-    elseif(period = "daily"){
+    else if(period = "daily"){
 
         start = new Date(date);
         start.setHours(0,0,0,0);

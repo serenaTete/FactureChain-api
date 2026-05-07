@@ -1,11 +1,14 @@
 // services/blockchain.service.js
 
 import { ethers } from "ethers";
-import ABI from "../config/abi.json" assert { type: "json" };
-
+import {createRequire} from "module";
+import {hashData} from "../utils/hash.js";
 // =====================
 // CONFIGURATION BLOCKCHAIN
 // =====================
+const require = createRequire(import.meta.url);
+
+const ABI = require("../config/abi.json");
 
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 
@@ -24,7 +27,7 @@ const contract = new ethers.Contract(
 // AUTH / ROLES
 // =====================
 
-export const getRole = async (address) => {
+/* export const getRole = async (address) => {
   return await contract.getRole(address);
 };
 
@@ -47,15 +50,20 @@ export const secureAssignRole = async (caller, target, role) => {
   }
 
   return await assignRole(target, role);
-};
+}; */
 
 // =====================
 // CONSOMMATION
 // =====================
 
 export const recordConsumption = async (meterId, value, timestamp) => {
+  const hash = hashData(meterId, value, timestamp);
   const tx = await contract.recordConsumption(meterId, value, timestamp);
-  return await tx.wait();
+  receipt= await tx.wait();
+  return {
+    hash,
+    txHash: tx.hash
+  };
 };
 
 
@@ -69,8 +77,13 @@ export const storeConsumptionHash = async (consumptionId, hash) => {
 // =====================
 
 export const generateInvoice = async (meterId, month, year, totalKwh, montant) => {
+  const hash = hashData(meterId, month, year, totalKwh, montant);
   const tx = await contract.generateInvoice(meterId, month, year, totalKwh, montant);
-  return await tx.wait();
+  receipt= await tx.wait();
+  return {
+    hash,
+    txHash: tx.hash
+  };
 };
 
 export const getInvoices = async (user) => {
@@ -91,13 +104,34 @@ export const verifyFactureHash = async (factureId) => {
 // =====================
 
 export const submitClaim = async (data) => {
+  const hash = hashData(data);
   const tx = await contract.submitClaim(data);
-  return await tx.wait();
+   const receipt= await tx.wait();
+  return {
+    hash,
+    txHash: tx.hash
+  };
 };
 
-export const processClaim = async (claimId, status) => {
+export const processClaim = async (claimId) => {
   const tx = await contract.processClaim(claimId, status);
   return await tx.wait();
+};
+export const resolveClaim = async (claimId, data) => {
+  const finalHash = hashData(data);
+  const tx = await contract.resolveClaim(claimId, finalHash);
+  receipt= await tx.wait();
+  return {
+   finalHash
+  };
+};
+export const rejectClaim = async (claimId, data) => {
+  const finalHash = hashData(data)
+  const tx = await contract.processClaim(claimId, finalHash);
+  receipt= await tx.wait();
+  return {
+    finalHash
+  };
 };
 
 export const getClaims = async (user) => {
@@ -115,8 +149,13 @@ export const storeClaimHash = async (claimId, hash) => {
 
 export const reportAnomaly = async ( consommationId, type, description, date) => {
     try{
+      const hash = hashData(consommationId, type, description, date);
   const tx = await contract.reportAnomaly( consommationId, type, description, date);
-  return await tx.wait();
+  receipt= await tx.wait();
+  return {
+    hash,
+    txHash: tx.hash
+  };
     } catch(error){
         console.error("storeAnomaly", error.message);
         throw error;

@@ -1,5 +1,5 @@
 import prisma from "../utils/prisma.js";
-import {submitClaim, storeClaimHash} from "./blockchain.service.js";
+import {submitClaim, storeClaimHash, processClaim, resolveClaim, rejectClaim} from "./blockchain.service.js";
 import { hashData, uuidToBytes32 } from "../utils/hash.js";
 import { generateMonthlyBills} from "./facture.batch.services.js";
 import {createAlert} from "./alerte.services.js";
@@ -22,7 +22,7 @@ export const createReclamation = async (data) => {
   
 
   const idBytes = uuidToBytes32(reclamation.id);
-  await contract.storeClaimHash(idBytes, chain.hash);
+  await storeClaimHash(idBytes, chain.hash);
 
   return prisma.Report.update({
     where: { id: reclamation.id },
@@ -37,7 +37,7 @@ export const createReclamation = async (data) => {
 
  
 
- */
+ 
 export const getUserReclamations = (userId) => {
   return prisma.report.findMany({
     where: { userId },
@@ -65,6 +65,7 @@ export const processReclamation = async (complaintId, action) => {
 
  if(!reclamation) throw new Error("Réclamation introuvable");
 
+ await processClaim(complaintId);
  let status = "RESOLVED";
  let response = "";
 
@@ -81,25 +82,35 @@ export const processReclamation = async (complaintId, action) => {
 
   );
 
+
+
   response = "Facture corrigée et regénérée";
 
 
  }
 
- elseif( action === "RESOLVE"){
+ else if( action === "RESOLVE"){
 
+  
+  status= "RESOLVED";
   response = "Réclamation traitée";
+data= {status, response};
+  const ch = await resolveClaim(complaintId, data);
  }
 
- elseif(action === "REJECT"){
+ else if(action === "REJECT"){
 
   status = "REJECTED";
   response = "Réclamation rejetée après analyse";
+  data= {status, response};
+  const ch= await rejectClaim(complaintId, data);
  }
 
   return prisma.Report.update({
     where: { id: complaintId},
-    data: { status, response }
+    data: { status, response,
+      finalHash: ch.finalHash
+     }
   });
 
   }

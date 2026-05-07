@@ -1,4 +1,4 @@
-import * as service from "../services/report.service.js";
+import * as service from "../services/report.services.js";
 
 /**
  * 🟢 créer réclamation

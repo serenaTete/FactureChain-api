@@ -2,7 +2,6 @@
 import prisma from "../utils/prisma.js";
 import { recordConsumption } from "./blockchain.service.js";
 import { createAnomalie } from "./anomalieService.js";
-import { genererFacture } from "./facture.service.js";
 import {hashData} from "../utils/hash.js"
 import {io} from "../index.js";
 

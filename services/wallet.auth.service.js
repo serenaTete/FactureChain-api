@@ -3,14 +3,14 @@ import {ethers} from "ethers";
  import {generateNonce} from "../utils/nonce.util.js";
  import {generateToken} from "../utils/token.utils.js";
 
- export getNonce() = async(address) =>{
+ export const getNonce = async(address) =>{
 
     let user = await prima.User.findUnique({
         where: {address}
     });
 
     if(!user){
-        user= await.prisma.user.create({data:
+        user= await prisma.User.create({data:
             {address,
                 nonce: generateNonce()
             }

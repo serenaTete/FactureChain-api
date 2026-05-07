@@ -8,10 +8,10 @@ import simulationRoutes from "./routes/simulationRoutes.js";
 import testimonialRoutes from "./routes/testimonial.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 import verifyRoutes from "./routes/verification.routes.js";
-import runSimulation from "./services/simulationService.js"
-import {initSocket} from "./sockets/socket.js";
+import {runSimulation} from "./services/simulationService.js"
+import {initSocket} from "./socket/socket.js";
 import {startBilling} from "./cron/facture.cron.js";
-import authRoutes from "./wallet.auth.routes.js";
+import authRoutes from "./routes/wallet.auth.routes.js";
 
 dotenv.config();
 

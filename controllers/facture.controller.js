@@ -1,10 +1,11 @@
 
-import * as service from "../services/facturation.services.js";
+import * as service from "../services/facture.services.js";
 
 export const createFacture = async (req, res) => {
   try {
-    const facture = await service.genererFacture(
-      req.params.consommationId
+     const {meterId, year, month} = req.body;
+    const facture = await service.generateMonthlyBills(
+      meterId, year, month
     );
     res.json(facture);
   } catch (e) {
