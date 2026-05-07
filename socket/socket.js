@@ -15,7 +15,7 @@ export const initSocket = (server)=>{
             const user = getUserByaddress(adress);
 
             user.meters.foreach( meter => {
-                socjet.join(`meter_${meter.id}`)
+                socket.join(`meter_${meter.id}`)
             });
 
             console.log("Rooms rejointes :", user.meters.length);

@@ -12,3 +12,8 @@ export const markAsSeen = (id) => {
     data: { seen: true }
   });
 };
+
+export const createAlert = async (data) => {
+
+  return prisma.Alerte.create({data});
+}

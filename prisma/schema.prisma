@@ -21,13 +21,21 @@ model Report {
   name          String?        // optionnel
   city          String
   meterNumber   String
+  userId        String
+  meterId       String?
   billedAmount  Int            // montant facturé
   realAmount    Int            // montant réel
-  description   String
+  reason   String
   fileUrl       String?        // facture importée
   status        String   @default("pending")
   createdAt     DateTime @default(now())
-  resolution    String?
+  billId        String?
+  type          String
+  description   String
+  hash          String
+  txHash        String
+  status        ComplaintStatus @default(PENDING)
+  bill          Facture @relation(fields: [billId], references: [id])
 }
 
 model Testimonial {
@@ -58,6 +66,7 @@ model Compteur {
   numero    String   @unique
   userId    String?
   status    String
+  response  String?
   user      User?     @relation(fields: [userId], references: [id])
   consumptions  Consommation[]
 }
@@ -70,20 +79,31 @@ model Consommation {
   userAddress String
   meter       Compteur  @relation(fields: [compteurId], references: [id])
   hash        String
+  txHash      String
 }
 
 model Facture {
   id            String   @id @default(uuid())
   consommationId String
   montant       Float
-  statut        String // normal, suspect
+  status       BillStatus @default(GENERATED) 
   hash          String?
   version       Int @default(1)
   isActive      Boolean @default(true)
   txHash        String?
   userId        String
   qrCode        String
+   anomalyFlag   Boolean @default(false)
+  anomalyScore   Float?
   createdAt     DateTime @default(now())
+  meterId       String
+  meter         Compteur @relation(fields: [meterId], references: [id])
+  year          Int
+  month         Int
+  parentId      String?
+  totalKwh      Float
+  isCorrected   Boolean @default false
+
 }
 
 model Anomalie {
@@ -93,12 +113,24 @@ model Anomalie {
   description   String?
   createdAt     DateTime @default(now())
   consumption   Consumption @relation(fields: [consumptionId], references: [id])
-  hash          String ?
+  hash          String?
+  txHash        String?
+  billId        String
+  severity      String
+  bill          Facture @relation(fields: [billId], references: [id])
 }
 model Alerte {
   id        String @id @default(uuid())
+  meterId   String?
+  type      String
+  severity  String
   userId    String
   message   String
   seen      Boolean @default(false)
   createdAt DateTime @default(now())
+}
+
+enum BillStatus{
+  GENERATED
+  CORRECTED
 }

@@ -19,7 +19,7 @@ export const createMeter = async(numero)=>{
             numero,
             status: "AVAILABLE"
         }
-    })
+    });
 
 }
 

@@ -33,19 +33,23 @@ const meter = await prisma.Compteur.findUnique(
 if(!meter){
     throw new Error("Meter not found");
 }
-  await recordConsumption(
+  const chain= await recordConsumption(
      meterId,
-    hash,
+    value,
     Date.now()
   );
 
   await prisma.consommation.update({
     where: { id: conso.id },
     data: {
-      hash: hash
+      hash: chain.hash,
+      txhash: chain.txHash
      
     }
   });
+
+  const idBytes = uuidToBytes32(conso.id);
+    await storeConsumptionHash(idBytes, chain.hash);
 
   // 🚨 Détection anomalie
   let anomalie = null;
@@ -55,11 +59,11 @@ if(!meter){
 
  const address = meter.user.address;
 
- io.to(`meter_${meterId}`).emit("newConsumption"),{
+ io.to(`meter_${meterId}`).emit("newConsumption",{
    compteurId: meterId,
    valeurKwh: conso.valeurKwh,
     date: conso.date
- }
+ });
 
   return conso;
 };

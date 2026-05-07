@@ -25,6 +25,7 @@ app.use("/api/consommations", consommationRoutes);
 app.use("/api/factures", factureRoutes);
 app.use("/api/simulation", simulationRoutes);
 app.use("/api/verify", verifyRoutes);
+app.use("/api/meters", verifyRoutes);
 
 app.get("/api", (req, res) => {
   res.send("FactureChain API running 🚀");

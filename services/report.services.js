@@ -1,48 +1,41 @@
 import prisma from "../utils/prisma.js";
-import contract from "./blockchain.service.js";
+import {submitClaim, storeClaimHash} from "./blockchain.service.js";
 import { hashData, uuidToBytes32 } from "../utils/hash.js";
-import { regenerateFacture } from "./facture.regenerate.service.js";
+import { generateMonthlyBills} from "./facture.batch.service.js";
+import {createAlert} from "./alert.service.js";
 
-export const createReclamation = async (userId, message, factureId) => {
+export const createReclamation = async (data) => {
 
-  const reclamation = await prisma.report.create({
-    data: { userId, message, factureId }
+  const reclamation = await prisma.Report.create({
+    data
   });
 
-  const hash = hashData(reclamation);
+  await createAlert({
+
+    meterId: data.meterId,
+    type: "COMPLAINT",
+    message: "Nouvelle réclamation créée",
+    severity: "MEDIUM"
+  })
+
+  const chain = submitClaim(data);
+  
 
   const idBytes = uuidToBytes32(reclamation.id);
-  await contract.storeReclamationHash(idBytes, hash);
+  await contract.storeClaimHash(idBytes, chain.hash);
 
-  return prisma.report.update({
+  return prisma.Report.update({
     where: { id: reclamation.id },
-    data: { hash }
+    data: { hash: chain.hash,
+            txhash: chain.txHash
+     }
   });
 
 };
 
 
-export const createReclamation = async (userId, message, factureId = null) => {
 
-  const reclamation = await prisma.report.create({
-    data: { userId, message, factureId }
-  });
-
-  // hash
-  const hash = hashData(reclamation);
-
-  // blockchain
-  const idBytes = uuidToBytes32(reclamation.id);
-
-  await contract.storeReclamationHash(idBytes, hash);
-
-  // update DB
-  return prisma.report.update({
-    where: { id: reclamation.id },
-    data: { hash }
-  });
-};
-
+ 
 
  */
 export const getUserReclamations = (userId) => {
@@ -62,28 +55,53 @@ export const getReclamationById = (id) => {
 };
 
 
-export const processReclamation = async (
-  id,
-  status,
-  resolution,
-  factureId = null,
-  newAmount = null
-) => {
+export const processReclamation = async (complaintId, action) => {
 
-  const reclamation = await prisma.report.update({
-    where: { id },
-    data: { status, resolution }
+
+ const reclamation = await prisma.Report.findUnique({
+
+  where: {id: complaintId}
+ });
+
+ if(!reclamation) throw new Error("Réclamation introuvable");
+
+ let status = "RESOLVED";
+ let response = "";
+
+ if (action === "REGENERATE_BILL" &&  reclamation.billId){
+  const bill = await prisma.Facture.findUnique({
+    where: { id: reclamation.billId}
   });
 
-  let newFacture = null;
+  await generateMonthlyBills(
 
-  // si correction demandée
-  if (status === "RESOLUE" && factureId && newAmount) {
-    newFacture = await regenerateFacture(factureId, newAmount);
+    bill.meterId,
+    bill.year,
+    bill.month
+
+  );
+
+  response = "Facture corrigée et regénérée";
+
+
+ }
+
+ elseif( action === "RESOLVE"){
+
+  response = "Réclamation traitée";
+ }
+
+ elseif(action === "REJECT"){
+
+  status = "REJECTED";
+  response = "Réclamation rejetée après analyse";
+ }
+
+  return prisma.Report.update({
+    where: { id: complaintId},
+    data: { status, response }
+  });
+
   }
 
-  return {
-    reclamation,
-    newFacture
-  };
-};
+ 

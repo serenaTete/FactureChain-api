@@ -53,14 +53,11 @@ export const secureAssignRole = async (caller, target, role) => {
 // CONSOMMATION
 // =====================
 
-export const recordConsumption = async (meterId, hash, timestamp) => {
-  const tx = await contract.recordConsumption(user, hash, timestamp);
+export const recordConsumption = async (meterId, value, timestamp) => {
+  const tx = await contract.recordConsumption(meterId, value, timestamp);
   return await tx.wait();
 };
 
-export const getConsumptionHistory = async (user) => {
-  return await contract.getConsumption(user);
-};
 
 export const storeConsumptionHash = async (consumptionId, hash) => {
   const tx = await contract.storeConsumptionHash(consumptionId, hash);
@@ -71,8 +68,8 @@ export const storeConsumptionHash = async (consumptionId, hash) => {
 // FACTURES
 // =====================
 
-export const generateInvoice = async (user, amount, period) => {
-  const tx = await contract.generateInvoice(user, amount, period);
+export const generateInvoice = async (meterId, month, year, totalKwh, montant) => {
+  const tx = await contract.generateInvoice(meterId, month, year, totalKwh, montant);
   return await tx.wait();
 };
 
@@ -93,8 +90,8 @@ export const verifyFactureHash = async (factureId) => {
 // RECLAMATIONS
 // =====================
 
-export const submitClaim = async (user, description) => {
-  const tx = await contract.submitClaim(user, description);
+export const submitClaim = async (data) => {
+  const tx = await contract.submitClaim(data);
   return await tx.wait();
 };
 
@@ -116,9 +113,9 @@ export const storeClaimHash = async (claimId, hash) => {
 // ANOMALIES / ALERTES
 // =====================
 
-export const reportAnomaly = async (userAddress, hash, relatedHash, severity, timestamp) => {
+export const reportAnomaly = async ( consommationId, type, description, date) => {
     try{
-  const tx = await contract.reportAnomaly(userAddress, hash, relatedHash, severity, timestamp);
+  const tx = await contract.reportAnomaly( consommationId, type, description, date);
   return await tx.wait();
     } catch(error){
         console.error("storeAnomaly", error.message);

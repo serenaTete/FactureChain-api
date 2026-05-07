@@ -2,7 +2,7 @@
 import prisma from "../utils/prisma.js";
 import { storeOnBlockchain } from "./blockchain.service.js";
 import {hashData} from "../hash.js";
-import {reportAnomaly} from "./blockchain.service.js"
+import {reportAnomaly, storeAnomalyHash} from "./blockchain.service.js"
 
 
     const calculateSeverity =(value, average)=>{
@@ -57,8 +57,10 @@ const anomalyData = {
 
   const anomaly= await prisma.Anomalie.create({
     data:{
-        ...anomalyData,
-        hash
+       consommationId: consommation.id,
+        type: type,
+        description: description,
+        createdAt: new Date()
     }
 
     
@@ -66,12 +68,24 @@ const anomalyData = {
 
   });
 
-  await reportAnomaly(
-    userAddress,
-    hash,
-    consommation.hash,
-    severity
+  const chain= await reportAnomaly(
+   
+         consommation.id,
+        type,
+         description,
+        new Date()
   );
+   await prisma.Anomalie.update({
+
+        where: {id: anomaly.id},
+        data: {hash: chain.hash, txHash: chain.txHash}
+    });
+
+    const idBytes = uuidToBytes32(anomaly.id);
+    await storeAnomalyHash(idBytes, chain.hash);
+
+ io.to(`meter_${meterId}`).emit("alert", anomaly);
+
   return anomaly;
 
 };

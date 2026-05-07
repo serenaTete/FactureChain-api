@@ -1,78 +1,123 @@
 import prisma from "../utils/prisma.js";
 import QRCode from "qrcode";
 import crypto from "crypto";
-import contract from "./blockchain.service.js";
+import {generateInvoice, storeFactureHash} from "./blockchain.service.js";
 import { uuidToBytes32 } from "../utils/hash.js";
+import {createAlert} from "./alerte.services.js";
 
 /**
  * HASH
  */
-const hashData = (data) =>
-  crypto.createHash("sha256")
-    .update(JSON.stringify(data))
-    .digest("hex");
+
 
 /**
  * DETECTION ANOMALIES
  */
-const detectAnomalies = (value, montant) => {
-  let anomalies = [];
+ const detectAnomalies = (monthlyKwh, history) => {
+  const anomalies = [];
 
-  if (value > 1000) {
-    anomalies.push("SURCONSOMMATION");
+  const avg= history.reduce((s,v)=> s+v, 0)/ history.length;
+
+  if(monthlyKwh > avg * 2){
+    anomalies.push({type: "HIGH_BILL", severity: "HIGH", message: "Facture élevée"});
   }
 
-  if (montant > value * 120) {
-    anomalies.push("INCOHERENCE_FACTURE");
+  if (monthlyKwh < avg * 0.3 ) {
+   anomalies.push({type: "LOW_BILL", severity: "MEDIUM", message: "consommation faible"});
   }
+
+  
 
   return anomalies;
-};
+};  
 
+/*const validateBill = (totalKwh, amount, price)=> {
+
+const expected = totalKwh * price;
+const diff = Math.abs(amount - expected);
+
+if (diff > 1 ){
+  return {
+    valid: false,
+    error
+  }
+}
+
+} */
 /**
  * GENERATION MENSUELLE
  */
-export const generateMonthlyBills = async () => {
+export const generateMonthlyBills = async (meterId, year, month) => {
 
-  // 1. récupérer tous les users
-  const users = await prisma.user.findMany();
 
-  for (const user of users) {
-
-    // 2. consommation du mois
-    const consommations = await prisma.consommation.findMany({
-      where: {
-        userId: user.id,
-        createdAt: {
-          gte: new Date(new Date().setDate(1)) // début mois
+    const existing = await prisma.Facture.findFirst({
+        where: {
+            meterId,
+             year,
+              month,
+              status: "GENERATED"
         }
-      }
-    });
+    })
 
-    const total = consommations.reduce((a, c) => a + c.value, 0);
+    if(existing) return existing;
+  // 1. récupérer tous les users
+  const start = new Date(year, month-1, 1);
+  const end = new Date(year, month, 0, 23, 59, 59, 999);
+
+  const consumptions = await prisma.Consommation.findMany({
+    where: {
+        compteurId: meterId,
+        date: {gte: start, lte: end}
+    }
+  });
+ 
+    const total = consumptions.reduce((s, c) => s + c.value, 0);
     const montant = total * 100;
 
     // 3. facture
-    const facture = await prisma.facture.create({
+    const facture = await prisma.Facture.create({
       data: {
-        userId: user.id,
-        consommationId: consommations[0]?.id,
-        montant
+         meterId,
+        montant,
+        month,
+        year,
+        totalKwh: total
       }
     });
 
+    
+   
+const chain = await generateInvoice(meterId, month, year, total, montant)
+ const qrCode = await QRCode.toDataURL(
+      JSON.stringify({ id: facture.id, hash: chain.hash })
+    );
+
+    await prisma.Facture.update({
+
+        where: {id: facture.id},
+        data: {hash: chain.hash, txHash: chain.txHash, qrCode}
+    });
     // 4. anomalies
-    const anomalies = detectAnomalies(total, montant);
+    const history = await prisma.Facture.findMany({
+        where:{
+            meterId
+        },
+        orderBy: {createdAt: "desc"},
+        take: 6
+    });
+
+    const historyvalues = history.map( h => h.totalKwh);
+    const anomalies = detectAnomalies(total, historyValues);
 
     for (const a of anomalies) {
-      await prisma.anomalie.create({
+      await prisma.Anomalie.create({
         data: {
-          userId: user.id,
-          type: a,
-          severity: "HIGH"
+          type,
+          severity
+          
         }
       });
-
+use
       await prisma.alerte.create({
         data: {
           userId: user.id,
@@ -82,23 +127,16 @@ export const generateMonthlyBills = async () => {
     }
 
     // 5. hash
-    const hash = hashData(facture);
+    
 
     // 6. blockchain
     const idBytes = uuidToBytes32(facture.id);
-    await contract.storeFactureHash(idBytes, hash);
+    await storeFactureHash(idBytes, chain.hash);
 
     // 7. QR
-    const qrCode = await QRCode.toDataURL(
-      JSON.stringify({ id: facture.id, hash })
-    );
+   
 
     // 8. update facture
-    await prisma.facture.update({
-      where: { id: facture.id },
-      data: { hash, qrCode }
-    });
-
-    console.log(`✔ Facture générée pour ${user.id}`);
+   return facture;
+  
   }
-};

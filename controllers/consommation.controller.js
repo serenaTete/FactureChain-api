@@ -1,40 +1,21 @@
-import * as service from "../services/consommation.query.service.js";
+import {getHistory} from "../services/consommation.query.service.js";
 
 
-/**
- * 🔴 temps réel
- */
-export const realtime = async (req, res) => {
-  res.json(await service.getRealtime(req.params.userId));
+export const history = async (req, res) =>{
+try{
+
+    const result = await getHistory({
+        meterId: req.query.meterId,
+        period: req.query.period,
+        date: req.query.date,
+        year: Number(req.query.year),
+        month: Number(req.query.month)
+    });
+
+    res.json(result);
+}catch (err){
+    res.status(400).json({error: err.message});
+}
 };
 
-/**
- * 📅 jour
- */
-export const daily = async (req, res) => {
-  res.json(await service.getDaily(
-    req.params.userId,
-    req.query.date
-  ));
-};
 
-/**
- * 📆 mois
- */
-export const monthly = async (req, res) => {
-  res.json(await service.getMonthly(
-    req.params.userId,
-    req.query.year,
-    req.query.month
-  ));
-};
-
-/**
- * 📈 année
- */
-export const yearly = async (req, res) => {
-  res.json(await service.getYearly(
-    req.params.userId,
-    req.query.year
-  ));
-};

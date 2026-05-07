@@ -9,17 +9,20 @@ export const create = async(req, res)=>{
 export const assign = async(req, res)=>{
 
     const {meterId, userId} = req.body;
-    const result
+    const result = await assignMeter(meterId, userId);
+    res.json(result);
 }
 
-export const create = async(req, res)=>{
+export const unassign = async(req, res)=>{
 
-    const meter = await createMeter(req.body.name);
-    res.json(meter);
+  const {meterId} = req.body;
+    const result = await unassignMeter(meterId);
+    res.json(result);
 }
 
-export const create = async(req, res)=>{
+export const meters = async(req, res)=>{
 
-    const meter = await createMeter(req.body.name);
-    res.json(meter);
+    const address = req.params;
+    const data = await getMetersByUser(address);
+    res.json(data);
 }
