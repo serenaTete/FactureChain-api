@@ -10,6 +10,8 @@ import reportRoutes from "./routes/report.routes.js";
 import verifyRoutes from "./routes/verification.routes.js";
 import runSimulation from "./services/simulationService.js"
 import {initSocket} from "./sockets/socket.js";
+import {startBilling} from "./cron/facture.cron.js";
+import authRoutes from "./wallet.auth.routes.js";
 
 dotenv.config();
 
@@ -31,7 +33,7 @@ app.get("/api", (req, res) => {
   res.send("FactureChain API running 🚀");
 });
 
-
+startBilling();
 setInterval(() => {
   runSimulation();
 }, 5000);

@@ -1,20 +1,28 @@
 import cron from "node-cron";
 import prisma from "../utils/prisma.js";
-import { generateFacture } from "../services/facture.service.js";
+import { generateMonthlyBills } from "../services/facture.batch.services.js";
 
-cron.schedule("59 23 28-31 * *", async () => {
+export const startBilling = () => {
+cron.schedule("0 0 1 * *", async () => {
 
-  const users = await prisma.user.findMany();
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const meters = await prisma.Compteur.findMany({
+    where: {status: "ASSIGNED"}
+  });
 
-  for (const user of users) {
+  for (const meter of meters) {
 
-    const conso = await prisma.consommation.findFirst({
-      where: { userId: user.id }
-    });
-
-    if (conso) {
-      await generateFacture(conso);
-    }
-  }
+try{
+  await generateMonthlyBills(meter.id, year, month);
+}catch(err){
+  console.error(`Erreur compteur *{meter.id}`, err.message);
+}
+    
+}
+console.log("facturation terminée");
 
 });
+
+}

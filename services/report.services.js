@@ -1,8 +1,8 @@
 import prisma from "../utils/prisma.js";
 import {submitClaim, storeClaimHash} from "./blockchain.service.js";
 import { hashData, uuidToBytes32 } from "../utils/hash.js";
-import { generateMonthlyBills} from "./facture.batch.service.js";
-import {createAlert} from "./alert.service.js";
+import { generateMonthlyBills} from "./facture.batch.services.js";
+import {createAlert} from "./alerte.services.js";
 
 export const createReclamation = async (data) => {
 

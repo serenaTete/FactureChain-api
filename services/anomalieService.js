@@ -3,7 +3,7 @@ import prisma from "../utils/prisma.js";
 import { storeOnBlockchain } from "./blockchain.service.js";
 import {hashData} from "../hash.js";
 import {reportAnomaly, storeAnomalyHash} from "./blockchain.service.js"
-
+import {io} from "../index.js";
 
     const calculateSeverity =(value, average)=>{
         const ratio = average ? value / average : 1;

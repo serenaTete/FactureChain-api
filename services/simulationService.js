@@ -2,6 +2,7 @@
 import { createConsommation } from "./consommation.service.js";
 import {getAssignedMeters} from "./meter.services.js";
 
+
 const random = (min, max) => Math.random() * (max - min) + min;
 
 const generateValue = () => {

@@ -1,6 +1,7 @@
 import prisma from "../utils/prisma.js";
 import {hashData} from "../utils/hash.js"
 
+
 export const getMetersByUser = async(address) => {
 
     return await prisma.User.findUnique({
